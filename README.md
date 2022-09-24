@@ -46,13 +46,81 @@
 4) Создать объект Cube;
 5) Создать объект Sphere;
 6) Установить компонент Sphere Collider для объекта Sphere;
-7) Настроить Sphere Collider в роли триггера;
-8) Объект куб перекрасить в красный цвет;
-9) Добавить кубу симуляцию физики, при это куб не должен проваливаться под Plane;
-10) Написать скрипт, который будет выводить в консоль сообщение о том, что объект Sphere столкнулся с объектом Cube;
-11) При столкновении Cube должен менять свой цвет на зелёный, а при завершении столкновения обратно на красный.
+7) Объект куб перекрасить в красный цвет;
+8) Добавить кубу симуляцию физики, при этом куб не должен проваливаться под Plane;
+9) Написать скрипт, который будет выводить в консоль сообщение о том, что объект Sphere столкнулся с объектом Cube;
+```c#
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
-Ссылка на репозиторий с лабораторной работой: https://github.com/SweetSnowyWitch/Unity_Lesson1
+public class CheckCollider : MonoBehaviour
+{
+    // Start is called before the first frame update
+    void Start()
+    {
+        
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        
+    }
+
+    private void OnTriggerEnter(Collider other) {
+        Debug.Log("Произошло столкновение с " + other.gameObject.name);
+        other.GetComponent<Renderer>().material.SetColor("_Color", Color.green);
+    }
+
+    private void OnTriggerExit(Collider other) {
+        Debug.Log("Завершено столкновение с " + other.gameObject.name);
+        other.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
+    }
+}
+
+```
+
+10) Написать скрипт, чтобы при столкновении Cube менял свой цвет на зелёный, а при завершении столкновения обратно на красный.
+```c#
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class CheckCollision : MonoBehaviour
+{
+    // Start is called before the first frame update
+    void Start()
+    {
+
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+
+    }
+
+    private void OnCollisionEnter(Collision other)
+    {
+        if (other.gameObject.name.Equals("Cube"))
+        {
+            other.gameObject.GetComponent<Renderer>().material.SetColor("_Color", Color.green);
+        }
+    }
+
+    private void OnCollisionExit(Collision other)
+    {
+        if (other.gameObject.name.Equals("Cube"))
+        {
+            other.gameObject.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
+        }
+    }
+}
+```
+
+![image](https://user-images.githubusercontent.com/75910420/192097284-af60dde6-af4b-414c-821c-eb85b3f60ae4.png)
+![image](https://user-images.githubusercontent.com/75910420/192097291-66428c85-3a19-44d7-8d8c-7ee18f930330.png)
 
 ## Задание 2
 ### Продемонстрируйте на сцене в Unity следующее:
@@ -67,13 +135,45 @@
 3) Присвоить SpawnCube красный цвет;
 4) Сделать SpawnCube ассетом и убрать со сцены;
 5) Создать скрипт SpawnCubes и добавить его к CubePoint;
-6) При изменении переменной Cube Count в большую сторону, количество кубов на сцене увеличится, иначе – останется неизменным.
 
-Ссылка на репозиторий с лабораторной работой: https://github.com/SweetSnowyWitch/Unity_Lesson1
+```c#
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class SpawnCubes : MonoBehaviour
+{
+    public GameObject spawnCube;
+    public int cubeCount = 0;
+    private int counter = 0;
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        while (counter < cubeCount)
+        {
+            Instantiate(spawnCube);
+            counter++;
+        }
+    }
+}
+```
+
+6) При изменении переменной Cube Count в большую сторону, количество кубов на сцене увеличится, иначе – останется неизменным.
+![image](https://user-images.githubusercontent.com/75910420/192097416-3a820c6c-fe37-48b5-8871-ffb2bb21861b.png)
+![image](https://user-images.githubusercontent.com/75910420/192097435-311c40b4-ba97-49ae-9d0e-d1319fb59eae.png)
 
 ## Выводы
 
 В ходе работы были выполнены задания 1 и 3: сделаны несколько скриптов (смена цвета куба при столкновении с шаром, а также разрушение шара при столкновении с платформой), изучены компоненты Collider и Rigitbody, а также материал красного цвета.
+
+| GitHub | [https://github.com/SweetSnowyWitch/DA-in-GameDev-lab1] |
 
 ## Powered by
 
