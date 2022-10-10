@@ -1,5 +1,5 @@
 # Разработка игровых сервисов
-Отчет по лабораторной работе #1 выполнил(а):
+Отчет по лабораторной работе #2 выполнил(а):
 - Городилова Снежана Александровна
 - РИ-300001
 Отметка о выполнении заданий (заполняется студентом):
@@ -8,7 +8,7 @@
 | ------ | ------ | ------ |
 | Задание 1 | * | 60 |
 | Задание 2 | # | 20 |
-| Задание 3 | * | 20 |
+| Задание 3 | # | 20 |
 
 знак "*" - задание выполнено; знак "#" - задание не выполнено;
 
@@ -38,24 +38,75 @@
 Ознакомиться с основными функциями Unity и взаимодействием с объектами внутри редактора.
 
 ## Задание 1
-### В разделе «ход работы» пошагово выполнить каждый пункт с описанием и примера реализации задач по теме видео самостоятельной работы.
+### По теме видео практических работ 1-5 повторить реализацию игры на Unity. Привести описание выполненных действий.
 Ход работы:
-1) Создать новый проект из шаблона 3D – Core;
-2) Проверить, что настроена интеграция редактора Unity и Visual Studio Code (пункты 8-10 введения);
-3) Создать объект Plane;
-4) Создать объект Cube;
-5) Создать объект Sphere;
-6) Установить компонент Sphere Collider для объекта Sphere;
-7) Объект куб перекрасить в красный цвет;
-8) Добавить кубу симуляцию физики, при этом куб не должен проваливаться под Plane;
-9) Написать скрипт, который будет выводить в консоль сообщение о том, что объект Sphere столкнулся с объектом Cube;
-```c#
+1) Создание проекта 3D - Core
+2) Скачивание ассетов Dragon for Boss Monster: PBR и Fire & Spell Effects
+3) Добавление на поле одного из ассетных драконов
+4) Создание контроллера для анимаций дракона, добавление IDLE анимации полёта
+5) Написание скрипта EnemyDragon для описания поведения дракона:
+```
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CheckCollider : MonoBehaviour
+public class EnemyDragon : MonoBehaviour
 {
+    public GameObject dragonEggPrefab;
+    public float speed = 1;
+    public float timeBetweenEggDrops = 1f;
+    public float leftRightDistance = 10f;
+    public float chanceDirection = 0.1f;
+    // Start is called before the first frame update
+    void Start()
+    {
+        Invoke("DropEgg", 2f);
+
+    }
+
+    void DropEgg()
+    {
+        var myVector = new Vector3(0f, 5f, 0f);
+        var egg = Instantiate<GameObject>(dragonEggPrefab);
+        egg.transform.position = transform.position + myVector;
+        Invoke("DropEgg", timeBetweenEggDrops);
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        var pos = transform.position;
+        pos.x += speed * Time.deltaTime;
+        transform.position = pos;
+
+        if (pos.x < -leftRightDistance)
+        {
+            speed = Mathf.Abs(speed);
+        }
+        else if (pos.x > leftRightDistance)
+        {
+            speed = -Mathf.Abs(speed);
+        }
+    }
+
+    private void FixedUpdate() {
+        if (Random.value < chanceDirection)
+        {
+            speed *= -1;
+        }
+    }
+}
+```
+6) Создание объекта DragonEgg и материала для него, присвоение объекту кастомного тега Dragon Egg
+7) Создание скрипта DragonEgg для уничтожения при столкновении с поверхностью и появлению при этом эффекта огня:
+```
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class DragonEgg : MonoBehaviour
+{
+    public static float bottomY = -30f;
     // Start is called before the first frame update
     void Start()
     {
@@ -65,113 +116,73 @@ public class CheckCollider : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        if (transform.position.y < bottomY)
+        {
+            Destroy(this.gameObject);
+        }
     }
 
-    private void OnTriggerEnter(Collider other) {
-        Debug.Log("Произошло столкновение с " + other.gameObject.name);
-        other.GetComponent<Renderer>().material.SetColor("_Color", Color.green);
-    }
-
-    private void OnTriggerExit(Collider other) {
-        Debug.Log("Завершено столкновение с " + other.gameObject.name);
-        other.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
+    private void OnTriggerEnter(Collider other) 
+    {
+        var ps = GetComponent<ParticleSystem>();
+        var em = ps.emission;
+        em.enabled = true;
+        var rend = GetComponent<Renderer>();
+        rend.enabled = false;
     }
 }
-
 ```
-
-10) Написать скрипт, чтобы при столкновении Cube менял свой цвет на зелёный, а при завершении столкновения обратно на красный.
-```c#
+8) Создание объекта EnergyShield с полупрозрачным материалом
+9) Создания объекта Ground с ассетным материалом
+10) Создание скрипта DragonPicker для Ground:
+```
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CheckCollision : MonoBehaviour
+public class DragonPicker : MonoBehaviour
 {
+    public GameObject energyShieldPrefab;
+    public int numEnergyShield = 3;
+    public float energyShieldBottomY = -6f;
+    public float energyShieldRadius = 1.5f;
     // Start is called before the first frame update
     void Start()
     {
-
+        for (var i = 1; i <= numEnergyShield; i++)
+        {
+            var tShieldGo = Instantiate<GameObject>(energyShieldPrefab);
+            tShieldGo.transform.position = new Vector3(0, energyShieldBottomY, 0);
+            tShieldGo.transform.localScale = new Vector3(i, i, i);
+        }
     }
 
     // Update is called once per frame
     void Update()
     {
-
-    }
-
-    private void OnCollisionEnter(Collision other)
-    {
-        if (other.gameObject.name.Equals("Cube"))
-        {
-            other.gameObject.GetComponent<Renderer>().material.SetColor("_Color", Color.green);
-        }
-    }
-
-    private void OnCollisionExit(Collision other)
-    {
-        if (other.gameObject.name.Equals("Cube"))
-        {
-            other.gameObject.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
-        }
+        
     }
 }
 ```
 
-![image](https://user-images.githubusercontent.com/75910420/192097284-af60dde6-af4b-414c-821c-eb85b3f60ae4.png)
-![image](https://user-images.githubusercontent.com/75910420/192097291-66428c85-3a19-44d7-8d8c-7ee18f930330.png)
+
+https://user-images.githubusercontent.com/75910420/194908278-d8bc7445-27e7-40a6-8e4c-53cc66398b45.mp4
+
+
 
 ## Задание 2
-### Продемонстрируйте на сцене в Unity следующее:
-- Что произойдёт с координатами объекта, если он перестанет быть дочерним?
-- Создайте три различных примера работы компонента RigidBody.
+### В проект, выполненный в предыдущем задании, добавить систему проверки того, что SDK подключен (доступен в режиме онлайн и отвечает на запросы);
 
 ## Задание 3
-### Реализуйте на сцене генерацию n кубиков. Число n вводится пользователем после старта сцены.
-Ход работы:
-1) Создать объект Empty с названием CubePoint;
-2) Создать объект Cube с названием SpawnCube;
-3) Присвоить SpawnCube красный цвет;
-4) Сделать SpawnCube ассетом и убрать со сцены;
-5) Создать скрипт SpawnCubes и добавить его к CubePoint;
-
-```c#
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public class SpawnCubes : MonoBehaviour
-{
-    public GameObject spawnCube;
-    public int cubeCount = 0;
-    private int counter = 0;
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        while (counter < cubeCount)
-        {
-            Instantiate(spawnCube);
-            counter++;
-        }
-    }
-}
-```
-
-6) При изменении переменной Cube Count в большую сторону, количество кубов на сцене увеличится, иначе – останется неизменным.
-![image](https://user-images.githubusercontent.com/75910420/192097416-3a820c6c-fe37-48b5-8871-ffb2bb21861b.png)
-![image](https://user-images.githubusercontent.com/75910420/192097435-311c40b4-ba97-49ae-9d0e-d1319fb59eae.png)
+### 1. Произвести сравнительный анализ игровых сервисов Яндекс Игры и VK Game;
+### 2. Дать сравнительную характеристику сервисов, описать функционал;
+### 3. Описать их методы интеграции с Unity;
+### 4. Произвести сравнение, сделать выводы;
+### 5. Подготовить реферат по результатам выполнения пунктов 1-4 .
 
 ## Выводы
 
-В ходе работы были выполнены задания 1 и 3: сделаны несколько скриптов (смена цвета куба при столкновении с шаром, а также разрушение шара при столкновении с платформой), изучены компоненты Collider и Rigitbody, а также материал красного цвета.
+В ходе работы было выполнено задание 1, разобран принцип работы с ассетами.
 
 | GitHub | [https://github.com/SweetSnowyWitch/DA-in-GameDev-lab1] |
 
