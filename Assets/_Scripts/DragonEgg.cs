@@ -1,0 +1,32 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class DragonEgg : MonoBehaviour
+{
+    public static float bottomY = -30f;
+    
+    void Start()
+    {
+        
+    }
+
+    void Update()
+    {
+        if (transform.position.y < bottomY)
+        {
+            Destroy(this.gameObject);
+            var apScript = Camera.main.GetComponent<DragonPicker>();
+            apScript.DragonEggDestroyed();
+        }
+    }
+
+    private void OnTriggerEnter(Collider other) 
+    {
+        var ps = GetComponent<ParticleSystem>();
+        var em = ps.emission;
+        em.enabled = true;
+        var rend = GetComponent<Renderer>();
+        rend.enabled = false;
+    }
+}
