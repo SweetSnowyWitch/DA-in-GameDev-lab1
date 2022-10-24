@@ -213,7 +213,7 @@ public class DragonEgg : MonoBehaviour
 3) Загрузка .zip-архива в консоль Яндекс Игр.
 
 Итоговый результат:
-
+https://yandex.ru/games/app/198395?draft=true&lang=ru
 https://user-images.githubusercontent.com/75910420/197501924-0a70ab25-0a62-4dae-b140-f9218d0da3b4.mp4
 
 
