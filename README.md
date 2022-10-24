@@ -1,5 +1,5 @@
 # Разработка игровых сервисов
-Отчет по лабораторной работе #2 выполнил(а):
+Отчет по лабораторной работе #3 выполнил(а):
 - Городилова Снежана Александровна
 - РИ-300001
 Отметка о выполнении заданий (заполняется студентом):
@@ -7,8 +7,8 @@
 | Задание | Выполнение | Баллы |
 | ------ | ------ | ------ |
 | Задание 1 | * | 60 |
-| Задание 2 | # | 20 |
-| Задание 3 | # | 20 |
+| Задание 2 | * | 20 |
+| Задание 3 | * | 20 |
 
 знак "*" - задание выполнено; знак "#" - задание не выполнено;
 
@@ -38,67 +38,136 @@
 Ознакомиться с основными функциями Unity и взаимодействием с объектами внутри редактора.
 
 ## Задание 1
-### По теме видео практических работ 1-5 повторить реализацию игры на Unity. Привести описание выполненных действий.
+### Используя видео-материалы практических работ 1-5 повторить реализацию игровых механик:
+### – 1 Практическая работа «Реализация механизма ловли объектов».
+### – 2 Практическая работа «Реализация графического интерфейса с добавлением счетчика очков».
 Ход работы:
-1) Создание проекта 3D - Core
-2) Скачивание ассетов Dragon for Boss Monster: PBR и Fire & Spell Effects
-3) Добавление на поле одного из ассетных драконов
-4) Создание контроллера для анимаций дракона, добавление IDLE анимации полёта
-5) Написание скрипта EnemyDragon для описания поведения дракона:
+1) Создание скрипта EnergyShield:
 ```
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EnemyDragon : MonoBehaviour
+public class EnergyShield : MonoBehaviour
 {
-    public GameObject dragonEggPrefab;
-    public float speed = 1;
-    public float timeBetweenEggDrops = 1f;
-    public float leftRightDistance = 10f;
-    public float chanceDirection = 0.1f;
-    // Start is called before the first frame update
-    void Start()
-    {
-        Invoke("DropEgg", 2f);
-
-    }
-
-    void DropEgg()
-    {
-        var myVector = new Vector3(0f, 5f, 0f);
-        var egg = Instantiate<GameObject>(dragonEggPrefab);
-        egg.transform.position = transform.position + myVector;
-        Invoke("DropEgg", timeBetweenEggDrops);
-    }
-
-    // Update is called once per frame
     void Update()
     {
-        var pos = transform.position;
-        pos.x += speed * Time.deltaTime;
-        transform.position = pos;
-
-        if (pos.x < -leftRightDistance)
-        {
-            speed = Mathf.Abs(speed);
-        }
-        else if (pos.x > leftRightDistance)
-        {
-            speed = -Mathf.Abs(speed);
-        }
+        var mousePos2D = Input.mousePosition;
+        mousePos2D.z = -Camera.main.transform.position.z;
+        var mousePos3D = Camera.main.ScreenToWorldPoint(mousePos2D);
+        var pos = this.transform.position;
+        pos.x = mousePos3D.x;
+        this.transform.position = pos;
     }
 
-    private void FixedUpdate() {
-        if (Random.value < chanceDirection)
+    private void OnCollisionEnter(Collision other) {
+        var collided = other.gameObject;
+        if (collided.tag == "Dragon Egg")
         {
-            speed *= -1;
+            Destroy(collided);
         }
     }
 }
 ```
-6) Создание объекта DragonEgg и материала для него, присвоение объекту кастомного тега Dragon Egg
-7) Создание скрипта DragonEgg для уничтожения при столкновении с поверхностью и появлению при этом эффекта огня:
+2) Создание объекта TextMeshPro с названием "Score:"
+3) Добавление счётчика в скрипт EnergyShield:
+```
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using TMPro;
+
+public class EnergyShield : MonoBehaviour
+{
+    public TextMeshProUGUI scoreGT;
+
+    void Start()
+    {
+        var scoreGO = GameObject.Find("Score");
+        scoreGT = scoreGO.GetComponent<TextMeshProUGUI>();
+        scoreGT.text = "0";
+    }
+
+    void Update()
+    {
+        var mousePos2D = Input.mousePosition;
+        mousePos2D.z = -Camera.main.transform.position.z;
+        var mousePos3D = Camera.main.ScreenToWorldPoint(mousePos2D);
+        var pos = this.transform.position;
+        pos.x = mousePos3D.x;
+        this.transform.position = pos;
+    }
+
+    private void OnCollisionEnter(Collision other) {
+        var collided = other.gameObject;
+        if (collided.tag == "Dragon Egg")
+        {
+            Destroy(collided);
+        }
+        var score = int.Parse(scoreGT.text);
+        score += 1;
+        scoreGT.text = score.ToString();
+    }
+}
+```
+
+## Задание 2
+### – 3 Практическая работа «Уменьшение жизни. Добавление текстур».
+### – 4 Практическая работа «Структурирование исходных файлов в папке».
+Ход работы:
+1) Добавление уничтожения щитов в скрипт DragonPicker:
+```
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class DragonPicker : MonoBehaviour
+{
+    public GameObject energyShieldPrefab;
+    public int numEnergyShield = 3;
+    public float energyShieldBottomY = -6f;
+    public float energyShieldRadius = 1.5f;
+    
+    public List<GameObject> shieldList;
+    void Start()
+    {
+        shieldList = new List<GameObject>();
+
+        for (var i = 1; i <= numEnergyShield; i++)
+        {
+            var tShieldGo = Instantiate<GameObject>(energyShieldPrefab);
+            tShieldGo.transform.position = new Vector3(0, energyShieldBottomY, 0);
+            tShieldGo.transform.localScale = new Vector3(i, i, i);
+            shieldList.Add(tShieldGo);
+        }
+    }
+
+    void Update()
+    {
+        
+    }
+
+    public void DragonEggDestroyed()
+    {
+        var tDragonEggArray = GameObject.FindGameObjectsWithTag("Dragon Egg");
+        foreach (var tGO in tDragonEggArray)
+        {
+            Destroy(tGO);
+        }
+        var shieldIndex = shieldList.Count - 1;
+        var tShieldGo = shieldList[shieldIndex];
+        shieldList.RemoveAt(shieldIndex);
+        Destroy(tShieldGo);
+
+        if (shieldList.Count == 0)
+        {
+            SceneManager.LoadScene("_0Scene");
+        }
+    }
+}
+```
+2) Обновление скрипта DragonEgg:
 ```
 using System.Collections;
 using System.Collections.Generic;
@@ -107,18 +176,19 @@ using UnityEngine;
 public class DragonEgg : MonoBehaviour
 {
     public static float bottomY = -30f;
-    // Start is called before the first frame update
+    
     void Start()
     {
         
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (transform.position.y < bottomY)
         {
             Destroy(this.gameObject);
+            var apScript = Camera.main.GetComponent<DragonPicker>();
+            apScript.DragonEggDestroyed();
         }
     }
 
@@ -132,57 +202,24 @@ public class DragonEgg : MonoBehaviour
     }
 }
 ```
-8) Создание объекта EnergyShield с полупрозрачным материалом
-9) Создания объекта Ground с ассетным материалом
-10) Создание скрипта DragonPicker для Ground:
-```
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+3) Структурирование файлов по папкам:
+![image](https://user-images.githubusercontent.com/75910420/197500200-708c7bd7-9f6f-42c2-869a-1c19b8d7db13.png)
 
-public class DragonPicker : MonoBehaviour
-{
-    public GameObject energyShieldPrefab;
-    public int numEnergyShield = 3;
-    public float energyShieldBottomY = -6f;
-    public float energyShieldRadius = 1.5f;
-    // Start is called before the first frame update
-    void Start()
-    {
-        for (var i = 1; i <= numEnergyShield; i++)
-        {
-            var tShieldGo = Instantiate<GameObject>(energyShieldPrefab);
-            tShieldGo.transform.position = new Vector3(0, energyShieldBottomY, 0);
-            tShieldGo.transform.localScale = new Vector3(i, i, i);
-        }
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-}
-```
-
-
-https://user-images.githubusercontent.com/75910420/194908278-d8bc7445-27e7-40a6-8e4c-53cc66398b45.mp4
-
-
-
-## Задание 2
-### В проект, выполненный в предыдущем задании, добавить систему проверки того, что SDK подключен (доступен в режиме онлайн и отвечает на запросы);
 
 ## Задание 3
-### 1. Произвести сравнительный анализ игровых сервисов Яндекс Игры и VK Game;
-### 2. Дать сравнительную характеристику сервисов, описать функционал;
-### 3. Описать их методы интеграции с Unity;
-### 4. Произвести сравнение, сделать выводы;
-### 5. Подготовить реферат по результатам выполнения пунктов 1-4 .
+### – 5 Практическая работа «Интеграция игровых сервисов в готовое приложение».
+1) Подключение PluginYG.
+2) Создание объекта YandexGame.
+3) Загрузка .zip-архива в консоль Яндекс Игр.
+
+Итоговый результат:
+
+https://user-images.githubusercontent.com/75910420/197501924-0a70ab25-0a62-4dae-b140-f9218d0da3b4.mp4
+
 
 ## Выводы
 
-В ходе работы было выполнено задание 1, разобран принцип работы с ассетами.
+В ходе работы было выполнены задания 1, 2 и 3, добавлены счётчик очков и уменьшение жизней, интегрирован Yandex SDK.
 
 | GitHub | [https://github.com/SweetSnowyWitch/DA-in-GameDev-lab1] |
 
