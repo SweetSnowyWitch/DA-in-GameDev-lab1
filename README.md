@@ -1,5 +1,5 @@
 # Разработка игровых сервисов
-Отчет по лабораторной работе #3 выполнил(а):
+Отчет по лабораторной работе #4 выполнил(а):
 - Городилова Снежана Александровна
 - РИ-300001
 Отметка о выполнении заданий (заполняется студентом):
@@ -7,7 +7,7 @@
 | Задание | Выполнение | Баллы |
 | ------ | ------ | ------ |
 | Задание 1 | * | 60 |
-| Задание 2 | * | 20 |
+| Задание 2 | # | 20 |
 | Задание 3 | * | 20 |
 
 знак "*" - задание выполнено; знак "#" - задание не выполнено;
@@ -21,84 +21,107 @@
 
 [![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)](https://travis-ci.org/joemccann/dillinger)
 
-Структура отчета
-
-- Данные о работе: название работы, фио, группа, выполненные задания.
-- Цель работы.
-- Задание 1.
-- Код реализации выполнения задания. Визуализация результатов выполнения (если применимо).
-- Задание 2.
-- Код реализации выполнения задания. Визуализация результатов выполнения (если применимо).
-- Задание 3.
-- Код реализации выполнения задания. Визуализация результатов выполнения (если применимо).
-- Выводы.
-- ✨Magic ✨
-
 ## Цель работы
 Ознакомиться с основными функциями Unity и взаимодействием с объектами внутри редактора.
 
 ## Задание 1
-### Используя видео-материалы практических работ 1-5 повторить реализацию игровых механик:
-### – 1 Практическая работа «Реализация механизма ловли объектов».
-### – 2 Практическая работа «Реализация графического интерфейса с добавлением счетчика очков».
+### Используя видео-материалы практических работ 1-5 повторить реализацию приведенного ниже функционала:
+### – 1 Практическая работа «Создание анимации объектов на сцене»
+### – 2 Практическая работа «Создание стартовой сцены и переключение между ними»
+### – 3 Практическая работа «Доработка меню и функционала с остановкой игры»
+### – 4 Практическая работа «Добавление звукового сопровождения в игре»
+### – 5 Практическая работа «Добавление персонажа и сборка сцены для публикации на web-ресурсе»
 Ход работы:
-1) Создание скрипта EnergyShield:
+1) Создание новой сцены.
+2) Создание объекта облака cloud 2 1, добавление ему анимации и контроллера CloudAnimation.
+3) Добавление названия на главный экран и кнопок Play, Option и Quit для главного меню. 
+4) Написание скрипта MainMenu:
 ```
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
-public class EnergyShield : MonoBehaviour
+public class MainMenu : MonoBehaviour
 {
-    void Update()
+    public void PlayGame()
     {
-        var mousePos2D = Input.mousePosition;
-        mousePos2D.z = -Camera.main.transform.position.z;
-        var mousePos3D = Camera.main.ScreenToWorldPoint(mousePos2D);
-        var pos = this.transform.position;
-        pos.x = mousePos3D.x;
-        this.transform.position = pos;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
     }
 
-    private void OnCollisionEnter(Collision other) {
-        var collided = other.gameObject;
-        if (collided.tag == "Dragon Egg")
+    public void QuitGame()
+    {
+        Application.Quit();
+    }
+}
+```
+5) Подключение медотов скрипта MainMenu к кнопкам Play и Quit.
+6) Добавление новой сцены к билду.
+8) Создание меню настроек, состоящего из кнопки Back.
+9) Добавление надписи Paused.
+10) Написание скрипта Pause:
+```
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class Pause : MonoBehaviour
+{
+    private bool paused = false;
+    public GameObject panel;
+
+    void Start()
+    {
+        Time.timeScale = 1;
+        paused = false;
+        panel.SetActive(false);
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
         {
-            Destroy(collided);
+            if (!paused)
+            {
+                Time.timeScale = 0;
+                paused = true;
+                panel.SetActive(true);
+            }
+            else
+            {
+                Time.timeScale = 1;
+                paused = false;
+                panel.SetActive(false);
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex - 1);
         }
     }
 }
 ```
-2) Создание объекта TextMeshPro с названием "Score:"
-3) Добавление счётчика в скрипт EnergyShield:
+11) Добавление музыки в главное меню и игровую сцену.
+12) Добавление звука для столкновения яйца с землёй и щитом. 
+Для столкновения с землёй модифицирован метод OnTriggerEnter скрипта DragonEgg:
 ```
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using TMPro;
-
-public class EnergyShield : MonoBehaviour
-{
-    public TextMeshProUGUI scoreGT;
-
-    void Start()
+private void OnTriggerEnter(Collider other) 
     {
-        var scoreGO = GameObject.Find("Score");
-        scoreGT = scoreGO.GetComponent<TextMeshProUGUI>();
-        scoreGT.text = "0";
-    }
+        var ps = GetComponent<ParticleSystem>();
+        var em = ps.emission;
+        em.enabled = true;
+        var rend = GetComponent<Renderer>();
+        rend.enabled = false;
 
-    void Update()
-    {
-        var mousePos2D = Input.mousePosition;
-        mousePos2D.z = -Camera.main.transform.position.z;
-        var mousePos3D = Camera.main.ScreenToWorldPoint(mousePos2D);
-        var pos = this.transform.position;
-        pos.x = mousePos3D.x;
-        this.transform.position = pos;
+        audioSource = GetComponent<AudioSource>();
+        audioSource.Play();
     }
-
-    private void OnCollisionEnter(Collision other) {
+```
+Для столкновения с щитом модифицирован метод OnCollisionEnter скрипта EnergyShield:
+```
+private void OnCollisionEnter(Collision other) {
         var collided = other.gameObject;
         if (collided.tag == "Dragon Egg")
         {
@@ -107,119 +130,33 @@ public class EnergyShield : MonoBehaviour
         var score = int.Parse(scoreGT.text);
         score += 1;
         scoreGT.text = score.ToString();
+
+        audioSource = GetComponent<AudioSource>();
+        audioSource.Play();
     }
-}
 ```
+12) Скачивание модели персонажа с анимацией, переименование ассета в Mage1.
+13) Размещение Mage1 на сцене, подключение к объекту контроллера MageCTRL с анимацией MageIDLE.
+14) Добавление Point Light.
 
 ## Задание 2
-### – 3 Практическая работа «Уменьшение жизни. Добавление текстур».
-### – 4 Практическая работа «Структурирование исходных файлов в папке».
-Ход работы:
-1) Добавление уничтожения щитов в скрипт DragonPicker:
-```
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.SceneManagement;
-
-public class DragonPicker : MonoBehaviour
-{
-    public GameObject energyShieldPrefab;
-    public int numEnergyShield = 3;
-    public float energyShieldBottomY = -6f;
-    public float energyShieldRadius = 1.5f;
-    
-    public List<GameObject> shieldList;
-    void Start()
-    {
-        shieldList = new List<GameObject>();
-
-        for (var i = 1; i <= numEnergyShield; i++)
-        {
-            var tShieldGo = Instantiate<GameObject>(energyShieldPrefab);
-            tShieldGo.transform.position = new Vector3(0, energyShieldBottomY, 0);
-            tShieldGo.transform.localScale = new Vector3(i, i, i);
-            shieldList.Add(tShieldGo);
-        }
-    }
-
-    void Update()
-    {
-        
-    }
-
-    public void DragonEggDestroyed()
-    {
-        var tDragonEggArray = GameObject.FindGameObjectsWithTag("Dragon Egg");
-        foreach (var tGO in tDragonEggArray)
-        {
-            Destroy(tGO);
-        }
-        var shieldIndex = shieldList.Count - 1;
-        var tShieldGo = shieldList[shieldIndex];
-        shieldList.RemoveAt(shieldIndex);
-        Destroy(tShieldGo);
-
-        if (shieldList.Count == 0)
-        {
-            SceneManager.LoadScene("_0Scene");
-        }
-    }
-}
-```
-2) Обновление скрипта DragonEgg:
-```
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public class DragonEgg : MonoBehaviour
-{
-    public static float bottomY = -30f;
-    
-    void Start()
-    {
-        
-    }
-
-    void Update()
-    {
-        if (transform.position.y < bottomY)
-        {
-            Destroy(this.gameObject);
-            var apScript = Camera.main.GetComponent<DragonPicker>();
-            apScript.DragonEggDestroyed();
-        }
-    }
-
-    private void OnTriggerEnter(Collider other) 
-    {
-        var ps = GetComponent<ParticleSystem>();
-        var em = ps.emission;
-        em.enabled = true;
-        var rend = GetComponent<Renderer>();
-        rend.enabled = false;
-    }
-}
-```
-3) Структурирование файлов по папкам:
-![image](https://user-images.githubusercontent.com/75910420/197500200-708c7bd7-9f6f-42c2-869a-1c19b8d7db13.png)
-
+### Привести описание того, как происходит сборка проекта проекта под другие платформы. Какие могут быть особенности?
 
 ## Задание 3
-### – 5 Практическая работа «Интеграция игровых сервисов в готовое приложение».
-1) Подключение PluginYG.
-2) Создание объекта YandexGame.
-3) Загрузка .zip-архива в консоль Яндекс Игр.
+### Добавить в меню Option возможность изменения громкости (от 0 до 100%) фоновой музыки в игре.
+Ход работы:
+1) Добавление в меню настроек слайдеров EffectSlider и ThemeSlider.
+2) Подключение EffectSlider к звукам DragonEgg и EnergyShield.
+3) Подкючение игровой темы к Enemy и отключение её у игровой сцены и Enemy в главном меню.
+4) Подключение ThemeSlider к звукам MainCamera главного меню и Ennemy.
 
 Итоговый результат:
-
-https://user-images.githubusercontent.com/75910420/197501924-0a70ab25-0a62-4dae-b140-f9218d0da3b4.mp4
+https://yandex.ru/games/app/198395?draft=true&lang=ru
 
 
 ## Выводы
 
-В ходе работы было выполнены задания 1, 2 и 3, добавлены счётчик очков и уменьшение жизней, интегрирован Yandex SDK.
+В ходе работы было выполнены задания 1 и 3, добавлены звуки, главное меню, меню настроек и дополнительный персонаж.
 
 | GitHub | [https://github.com/SweetSnowyWitch/DA-in-GameDev-lab1] |
 
