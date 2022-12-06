@@ -148,7 +148,7 @@ private void OnCollisionEnter(Collision other) {
 1) Добавление в меню настроек слайдеров EffectSlider и ThemeSlider.
 2) Подключение EffectSlider к звукам DragonEgg и EnergyShield.
 3) Подкючение игровой темы к Enemy и отключение её у игровой сцены и Enemy в главном меню.
-4) Подключение ThemeSlider к звукам MainCamera главного меню и Ennemy.
+4) Подключение ThemeSlider к звукам MainCamera главного меню и Enemy.
 
 Итоговый результат:
 https://yandex.ru/games/app/198395?draft=true&lang=ru
