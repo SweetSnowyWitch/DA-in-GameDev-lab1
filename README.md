@@ -1,5 +1,5 @@
 # Разработка игровых сервисов
-Отчет по лабораторной работе #4 выполнил(а):
+Отчет по лабораторной работе #5 выполнил(а):
 - Городилова Снежана Александровна
 - РИ-300001
 Отметка о выполнении заданий (заполняется студентом):
@@ -8,7 +8,7 @@
 | ------ | ------ | ------ |
 | Задание 1 | * | 60 |
 | Задание 2 | # | 20 |
-| Задание 3 | * | 20 |
+| Задание 3 | # | 20 |
 
 знак "*" - задание выполнено; знак "#" - задание не выполнено;
 
@@ -22,141 +22,196 @@
 [![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)](https://travis-ci.org/joemccann/dillinger)
 
 ## Цель работы
-Ознакомиться с основными функциями Unity и взаимодействием с объектами внутри редактора.
+Создание интерактивного приложения с рейтинговой системой пользователя и интеграция игровых сервисов в готовое приложение.
 
 ## Задание 1
 ### Используя видео-материалы практических работ 1-5 повторить реализацию приведенного ниже функционала:
-### – 1 Практическая работа «Создание анимации объектов на сцене»
-### – 2 Практическая работа «Создание стартовой сцены и переключение между ними»
-### – 3 Практическая работа «Доработка меню и функционала с остановкой игры»
-### – 4 Практическая работа «Добавление звукового сопровождения в игре»
-### – 5 Практическая работа «Добавление персонажа и сборка сцены для публикации на web-ресурсе»
+###– 1 Практическая работа «Интеграции авторизации с помощью Яндекс SDK»
+###– 2 Практическая работа «Сохранение данных пользователя на платформе Яндекс Игры»
+###– 3 Практическая работа «Сбор данных об игроке и вывод их в интерфейсе»
+###– 4 Практическая работа «Интеграция таблицы лидеров»
+###– 5 Практическая работа «Интеграция системы достижений в проект»
 Ход работы:
-1) Создание новой сцены.
-2) Создание объекта облака cloud 2 1, добавление ему анимации и контроллера CloudAnimation.
-3) Добавление названия на главный экран и кнопок Play, Option и Quit для главного меню. 
-4) Написание скрипта MainMenu:
+1) Добавление элемента YG на сцену 1.
+2) Модификация скрипта SavesYG:
 ```
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.SceneManagement;
 
-public class MainMenu : MonoBehaviour
+namespace YG
 {
-    public void PlayGame()
+    [System.Serializable]
+    public class SavesYG
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
-    }
+        public bool isFirstSession = true;
+        public string language = "ru";
+        public bool promptDone;
 
-    public void QuitGame()
-    {
-        Application.Quit();
+        // Ваши сохранения
+        public int score;
+        public int bestScore = 0;
+        public List<string> achievements = new List<string>();
     }
 }
 ```
-5) Подключение медотов скрипта MainMenu к кнопкам Play и Quit.
-6) Добавление новой сцены к билду.
-8) Создание меню настроек, состоящего из кнопки Back.
-9) Добавление надписи Paused.
-10) Написание скрипта Pause:
+3) Создание скрипта CheckConnectYG:
+```
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using YG;
+using TMPro;
+using System.Text;
+
+public class CheckConnectYG : MonoBehaviour
+{
+    private void OnEnable() => YandexGame.GetDataEvent += CheckSDK;
+    private void OnDisable() => YandexGame.GetDataEvent -= CheckSDK;
+    private TextMeshProUGUI scoreBest;
+    private TextMeshProUGUI achieveList;
+    // Start is called before the first frame update
+    void Start()
+    {
+        if (YandexGame.SDKEnabled)
+        {
+            CheckSDK();
+        }
+    }
+
+    // Update is called once per frame
+    public void CheckSDK()
+    {
+        if (YandexGame.auth)
+        {
+            Debug.Log("User authorization ok");
+        }
+        else
+        {
+            Debug.Log("User is not authorized");
+            YandexGame.AuthDialog();
+        }
+        var scoreBO = GameObject.Find("BestScore");
+        scoreBest = scoreBO.GetComponent<TextMeshProUGUI>();
+        scoreBest.text = "Best Score: " + YandexGame.savesData.bestScore.ToString();
+        var achieveBO = GameObject.Find("AchieveList");
+        achieveList = achieveBO.GetComponent<TextMeshProUGUI>();
+        var achieveText = new StringBuilder();
+        foreach (var achievement in YandexGame.savesData.achievements)
+        {
+            achieveText.Append("\n");
+            achieveText.Append(achievement);
+        }
+        achieveList.text = achieveText.ToString();
+    }
+}
+```
+4) Модификация скрипта DragonPicker, с добавлением лидерборда:
 ```
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using YG;
+using TMPro;
 
-public class Pause : MonoBehaviour
+public class DragonPicker : MonoBehaviour
 {
-    private bool paused = false;
-    public GameObject panel;
+    private void OnEnable() => YandexGame.GetDataEvent += GetLoadSave;
+    private void OnDisable() => YandexGame.GetDataEvent -= GetLoadSave;
+    public GameObject energyShieldPrefab;
+    public int numEnergyShield = 3;
+    public float energyShieldBottomY = -6f;
+    public float energyShieldRadius = 1.5f;
+    public TextMeshProUGUI scoreGT;
+    public TextMeshProUGUI playerName;
+    public List<GameObject> shieldList;
 
     void Start()
     {
-        Time.timeScale = 1;
-        paused = false;
-        panel.SetActive(false);
+        if (YandexGame.SDKEnabled)
+        {
+            GetLoadSave();
+        }
+        shieldList = new List<GameObject>();
+        var scoreGO = GameObject.Find("Score");
+        scoreGT = scoreGO.GetComponent<TextMeshProUGUI>();
+
+        for (var i = 1; i <= numEnergyShield; i++)
+        {
+            var tShieldGo = Instantiate<GameObject>(energyShieldPrefab);
+            tShieldGo.transform.position = new Vector3(0, energyShieldBottomY, 0);
+            tShieldGo.transform.localScale = new Vector3(i, i, i);
+            shieldList.Add(tShieldGo);
+        }
     }
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            if (!paused)
-            {
-                Time.timeScale = 0;
-                paused = true;
-                panel.SetActive(true);
-            }
-            else
-            {
-                Time.timeScale = 1;
-                paused = false;
-                panel.SetActive(false);
-            }
-        }
 
-        if (Input.GetKeyDown(KeyCode.Escape))
+    }
+
+    public void DragonEggDestroyed()
+    {
+        var tDragonEggArray = GameObject.FindGameObjectsWithTag("Dragon Egg");
+        foreach (var tGO in tDragonEggArray)
         {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex - 1);
+            Destroy(tGO);
         }
+        var shieldIndex = shieldList.Count - 1;
+        var tShieldGo = shieldList[shieldIndex];
+        shieldList.RemoveAt(shieldIndex);
+        Destroy(tShieldGo);
+
+        if (shieldList.Count == 0)
+        {
+            var scoreGO = GameObject.Find("Score");
+            scoreGT = scoreGT.GetComponent<TextMeshProUGUI>();
+            UserSave(int.Parse(scoreGT.text), "Береги щиты!");
+            YandexGame.NewLeaderboardScores("TopPlayerScores", int.Parse(scoreGT.text));
+            SceneManager.LoadScene("_0Scene");
+            GetLoadSave();
+        }
+    }
+
+    public void GetLoadSave()
+    {
+        Debug.Log(YandexGame.savesData.score);
+        var playerNamePrefabGUI = GameObject.Find("PlayerName");
+        playerName = playerNamePrefabGUI.GetComponent<TextMeshProUGUI>();
+        playerName.text = YandexGame.playerName;
+    }
+
+    public void UserSave(int currentScore, string achievement)
+    {
+        YandexGame.savesData.score = currentScore;
+        if (currentScore > YandexGame.savesData.bestScore)
+        {
+            YandexGame.savesData.bestScore = currentScore;
+        }
+        if (!YandexGame.savesData.achievements.Contains(achievement))
+        {
+            YandexGame.savesData.achievements.Add(achievement);
+        }
+        YandexGame.SaveProgress();
     }
 }
 ```
-11) Добавление музыки в главное меню и игровую сцену.
-12) Добавление звука для столкновения яйца с землёй и щитом. 
-Для столкновения с землёй модифицирован метод OnTriggerEnter скрипта DragonEgg:
-```
-private void OnTriggerEnter(Collider other) 
-    {
-        var ps = GetComponent<ParticleSystem>();
-        var em = ps.emission;
-        em.enabled = true;
-        var rend = GetComponent<Renderer>();
-        rend.enabled = false;
-
-        audioSource = GetComponent<AudioSource>();
-        audioSource.Play();
-    }
-```
-Для столкновения с щитом модифицирован метод OnCollisionEnter скрипта EnergyShield:
-```
-private void OnCollisionEnter(Collision other) {
-        var collided = other.gameObject;
-        if (collided.tag == "Dragon Egg")
-        {
-            Destroy(collided);
-        }
-        var score = int.Parse(scoreGT.text);
-        score += 1;
-        scoreGT.text = score.ToString();
-
-        audioSource = GetComponent<AudioSource>();
-        audioSource.Play();
-    }
-```
-12) Скачивание модели персонажа с анимацией, переименование ассета в Mage1.
-13) Размещение Mage1 на сцене, подключение к объекту контроллера MageCTRL с анимацией MageIDLE.
-14) Добавление Point Light.
-
-## Задание 2
-### Привести описание того, как происходит сборка проекта проекта под другие платформы. Какие могут быть особенности?
-
-## Задание 3
-### Добавить в меню Option возможность изменения громкости (от 0 до 100%) фоновой музыки в игре.
-Ход работы:
-1) Добавление в меню настроек слайдеров EffectSlider и ThemeSlider.
-2) Подключение EffectSlider к звукам DragonEgg и EnergyShield.
-3) Подкючение игровой темы к Enemy и отключение её у игровой сцены и Enemy в главном меню.
-4) Подключение ThemeSlider к звукам MainCamera главного меню и Enemy.
+5) Настройка лидерборда в Яндекс Консоли.
 
 Итоговый результат:
 https://yandex.ru/games/app/198395?draft=true&lang=ru
 
+https://user-images.githubusercontent.com/75910420/205960345-3f333bbd-d25c-4f11-b43b-48b14b12a26e.mp4
+
+
+## Задание 2
+### Описать не менее трех дополнительных функций Яндекс SDK, которые могут быть интегрированы в игру.
+
+## Задание 3
+### Доработать стилистическое оформление списка лидеров и системы достижений, реализованных в задании 1
 
 ## Выводы
 
-В ходе работы было выполнены задания 1 и 3, добавлены звуки, главное меню, меню настроек и дополнительный персонаж.
+В ходе работы было выполнено задание 1, добавлены лидерборд и достижения.
 
 | GitHub | [https://github.com/SweetSnowyWitch/DA-in-GameDev-lab1] |
 
