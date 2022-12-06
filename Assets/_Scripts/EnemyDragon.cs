@@ -1,10 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class EnemyDragon : MonoBehaviour
 {
     public GameObject dragonEggPrefab;
+    public TextMeshProUGUI scoreGT;
     public float speed = 1;
     public float timeBetweenEggDrops = 1f;
     public float leftRightDistance = 10f;
@@ -13,7 +15,8 @@ public class EnemyDragon : MonoBehaviour
     void Start()
     {
         Invoke("DropEgg", 2f);
-
+        var scoreGO = GameObject.Find("Score");
+        scoreGT = scoreGO.GetComponent<TextMeshProUGUI>();
     }
 
     void DropEgg()
@@ -41,7 +44,8 @@ public class EnemyDragon : MonoBehaviour
         }
     }
 
-    private void FixedUpdate() {
+    private void FixedUpdate()
+    {
         if (Random.value < chanceDirection)
         {
             speed *= -1;
