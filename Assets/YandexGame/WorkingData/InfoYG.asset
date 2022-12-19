@@ -15,10 +15,10 @@ MonoBehaviour:
   scopes: 1
   playerPhotoSize: 0
   leaderboardEnable: 1
-  siteLock: 0
+  siteLock: 1
   checkAdblock: 1
   fullscreenAdChallenge: 0
-  staticRBTInGame: 0
+  staticRBTInGame: 1
   LocalizationEnable: 1
   callingLanguageCheck: 0
   translateMethod: 0

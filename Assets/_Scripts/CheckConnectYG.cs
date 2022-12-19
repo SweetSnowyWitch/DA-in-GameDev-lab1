@@ -32,6 +32,7 @@ public class CheckConnectYG : MonoBehaviour
             Debug.Log("User is not authorized");
             YandexGame.AuthDialog();
         }
+        YandexGame.RewVideoShow(0);
         var scoreBO = GameObject.Find("BestScore");
         scoreBest = scoreBO.GetComponent<TextMeshProUGUI>();
         scoreBest.text = "Best Score: " + YandexGame.savesData.bestScore.ToString();
