@@ -1,5 +1,5 @@
 # Разработка игровых сервисов
-Отчет по лабораторной работе #5 выполнил(а):
+Отчет по лабораторной работе #6 выполнил(а):
 - Городилова Снежана Александровна
 - РИ-300001
 Отметка о выполнении заданий (заполняется студентом):
@@ -26,85 +26,50 @@
 
 ## Задание 1
 ### Используя видео-материалы практических работ 1-5 повторить реализацию приведенного ниже функционала:
-###– 1 Практическая работа «Интеграции авторизации с помощью Яндекс SDK»
-###– 2 Практическая работа «Сохранение данных пользователя на платформе Яндекс Игры»
-###– 3 Практическая работа «Сбор данных об игроке и вывод их в интерфейсе»
-###– 4 Практическая работа «Интеграция таблицы лидеров»
-###– 5 Практическая работа «Интеграция системы достижений в проект»
+###– 1 Практическая работа «Интеграция баннерной рекламы»
+###– 2 Практическая работа «Интеграция видеорекламы»
+###– 3 Практическая работа «Показ видеорекламы пользователю за вознаграждение»
+###– 4 Практическая работа «Создание внутриигрового магазина»
+###– 5 Практическая работа «Система антиблокировки рекламы»
+
 Ход работы:
-1) Добавление элемента YG на сцену 1.
-2) Модификация скрипта SavesYG:
-```
-using System.Collections.Generic;
-
-namespace YG
-{
-    [System.Serializable]
-    public class SavesYG
-    {
-        public bool isFirstSession = true;
-        public string language = "ru";
-        public bool promptDone;
-
-        // Ваши сохранения
-        public int score;
-        public int bestScore = 0;
-        public List<string> achievements = new List<string>();
-    }
-}
-```
-3) Создание скрипта CheckConnectYG:
+1) Создание RTB-блока на сайте Яндекса.
+2) Добавление id созданного блока в билд игры.
+3) Установка в настройках скрипта Viewing Ads YG для сцены 0 и 1 Pause Type - All и Pause Method - Remember Previous State.
+4) Добавление кнопки рекламы на стартовый экран. 
+5) Создание скрипта ADReward:
 ```
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using YG;
-using TMPro;
-using System.Text;
 
-public class CheckConnectYG : MonoBehaviour
+public class ADReward : MonoBehaviour
 {
-    private void OnEnable() => YandexGame.GetDataEvent += CheckSDK;
-    private void OnDisable() => YandexGame.GetDataEvent -= CheckSDK;
-    private TextMeshProUGUI scoreBest;
-    private TextMeshProUGUI achieveList;
-    // Start is called before the first frame update
-    void Start()
+    private void OnEnable() => YandexGame.CloseVideoEvent += Rewarded;
+    private void OnDisable() => YandexGame.CloseVideoEvent += Rewarded;
+
+    private void Rewarded(int id)
     {
-        if (YandexGame.SDKEnabled)
+        switch (id)
         {
-            CheckSDK();
+            case 1:
+                Debug.Log("Пользователь получил награду");
+                break;
+            default:
+                Debug.Log("Пользователь остался без награды");
+                break;
         }
     }
 
-    // Update is called once per frame
-    public void CheckSDK()
+    public void OpenAd()
     {
-        if (YandexGame.auth)
-        {
-            Debug.Log("User authorization ok");
-        }
-        else
-        {
-            Debug.Log("User is not authorized");
-            YandexGame.AuthDialog();
-        }
-        var scoreBO = GameObject.Find("BestScore");
-        scoreBest = scoreBO.GetComponent<TextMeshProUGUI>();
-        scoreBest.text = "Best Score: " + YandexGame.savesData.bestScore.ToString();
-        var achieveBO = GameObject.Find("AchieveList");
-        achieveList = achieveBO.GetComponent<TextMeshProUGUI>();
-        var achieveText = new StringBuilder();
-        foreach (var achievement in YandexGame.savesData.achievements)
-        {
-            achieveText.Append("\n");
-            achieveText.Append(achievement);
-        }
-        achieveList.text = achieveText.ToString();
+        YandexGame.RewVideoShow(Random.Range(0, 2));
     }
 }
+
 ```
-4) Модификация скрипта DragonPicker, с добавлением лидерборда:
+6) Модификация скрипта DragonPicker:
 ```
 using System.Collections;
 using System.Collections.Generic;
@@ -167,6 +132,7 @@ public class DragonPicker : MonoBehaviour
             scoreGT = scoreGT.GetComponent<TextMeshProUGUI>();
             UserSave(int.Parse(scoreGT.text), "Береги щиты!");
             YandexGame.NewLeaderboardScores("TopPlayerScores", int.Parse(scoreGT.text));
+            YandexGame.RewVideoShow(0);
             SceneManager.LoadScene("_0Scene");
             GetLoadSave();
         }
@@ -194,24 +160,24 @@ public class DragonPicker : MonoBehaviour
         YandexGame.SaveProgress();
     }
 }
+
 ```
-5) Настройка лидерборда в Яндекс Консоли.
+7) Добавление на стартовый экран объекта для покупок.
+8) Настройка объекта для покупок в консоли Яндекса.
 
 Итоговый результат:
 https://yandex.ru/games/app/198395?draft=true&lang=ru
 
-https://user-images.githubusercontent.com/75910420/205960345-3f333bbd-d25c-4f11-b43b-48b14b12a26e.mp4
-
 
 ## Задание 2
-### Описать не менее трех дополнительных функций Яндекс SDK, которые могут быть интегрированы в игру.
+### Добавить в приложение интерфейс для вывода статуса наличия игрока в сети (онлайн или офлайн).
 
 ## Задание 3
-### Доработать стилистическое оформление списка лидеров и системы достижений, реализованных в задании 1
+### Предложить наиболее подходящий на ваш взгляд способ монетизации игры D.Picker. Дать развернутый ответ с комментариями.
 
 ## Выводы
 
-В ходе работы было выполнено задание 1, добавлены лидерборд и достижения.
+В ходе работы было выполнено задание 1.
 
 | GitHub | [https://github.com/SweetSnowyWitch/DA-in-GameDev-lab1] |
 
